@@ -67,11 +67,12 @@ function close(){$("#sheet").classList.remove("on")}
 $("#sheet").onclick=e=>{if(e.target.id==="sheet")close()};
 const LAB={home:"Accueil",exp:"Dépenses",prov:"Provisions",hist:"Historique",set:"Réglages"};
 function render(){
-  $("#nav").innerHTML=Object.entries(LAB).map(([k,v])=>`<button class="${tab===k?"on":""}" onclick="tab='${k}';if(k==='home')vm=cur();render()">${v}</button>`).join("");
+  $("#nav").innerHTML=Object.entries(LAB).map(([k,v])=>`<button class="${tab===k?"on":""}" onclick="go('${k}')">${v}</button>`).join("");
   $("#app").innerHTML=({home,exp:expTab,prov,hist,set})[tab]();
 }
 function monthBar(){const[y,m]=vm.split("-").map(Number);
   return`<div class="row" style="align-items:center;margin-bottom:10px"><button class="sm" onclick="shift(-1)">‹</button><b>${MOIS[m-1]} ${y}</b><button class="sm" onclick="shift(1)">›</button></div>${ro()?`<div class="ro">Mois passé : consultation seule, les données ne peuvent pas être modifiées.</div>`:""}`}
+function go(k){tab=k;if(k==='home'||k==='exp')vm=cur();render();window.scrollTo(0,0)}
 function shift(n){const[y,m]=vm.split("-").map(Number),d=new Date(y,m-1+n,1);vm=mk(d);render()}
 function home(){
   const m=cur(),B=budget(m),l=inM(m),sp=sum(l),left=B-sp,pc=B?Math.round(sp/B*100):0,p=plan();
@@ -135,18 +136,18 @@ function set(){const p=plan(),days=[];for(let i=now().getDate();i<=p.N;i++)days.
   <button class="btn s" onclick="const v=$('#sa').value;v===''?delete S.day[$('#sd').value]:S.day[$('#sd').value]=+v;save();render()">Appliquer</button></div>
   <h2>Catégories</h2><div class="card">${S.cats.map(c=>`<div class="item"><span>${esc(c.n)}</span><span><button class="sm" onclick="catEdit('${c.id}')">Renommer</button> <button class="sm" onclick="catDel('${c.id}')">Supprimer</button></span></div>`).join("")}
   <br><button class="btn s" onclick="catEdit()">+ Catégorie</button></div>
-  <h2>Notifications</h2><div class="card"><button class="btn s" onclick="notifToggle()">${S.notif?"Désactiver":"Activer"} les rappels</button><p class="mut">Rappel à 20 h si aucune dépense du jour, et alerte à 80 % du budget.</p></div>
+  <h2>Notifications</h2><div class="card"><button class="btn s" onclick="notifToggle()">${S.notif?"Désactiver":"Activer"} les rappels</button><p class="mut">Alerte quand 15 % puis 80 % du budget du mois sont dépensés, et rappel à 20 h si aucune dépense du jour (quand l’application est ouverte).</p></div>
   <h2>Sauvegarde</h2><div class="card"><button class="btn s" onclick="exportD()">Sauvegarder mes données</button><br><br><label>Restaurer un fichier de sauvegarde</label><input type="file" accept=".json" onchange="importD(this.files[0])"></div>`}
 function catEdit(id){const c=S.cats.find(x=>x.id===id);const n=prompt("Nom de la catégorie",c?c.n:"");if(!n||!n.trim())return;
   if(c)c.n=n.trim();else S.cats.push({id:uid(),n:n.trim()});save();render()}
 function catDel(id){const u=S.exp.filter(e=>e.c===id).length;if(confirm(u?`Cette catégorie est utilisée par ${u} dépense(s). Elles seront classées « Sans catégorie ». Supprimer ?`:"Supprimer cette catégorie ?")){S.cats=S.cats.filter(c=>c.id!==id);save();render()}}
 function exportD(){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:"application/json"}));a.download="mon-budget-"+ymd(now())+".json";a.click()}
 function importD(f){if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.exp||!d.cats)throw 0;if(confirm("Remplacer les données actuelles par cette sauvegarde ?")){S=Object.assign(structuredClone(DEF),d);save();render()}}catch(e){alert("Fichier de sauvegarde invalide.")}};r.readAsText(f)}
-async function notifToggle(){if(S.notif){S.notif=false}else{if(!("Notification" in window)){alert("Notifications non prises en charge ici.");return}
+async function notifToggle(){if(S.notif){S.notif=false}else{if(window.Android){Android.ask();S.notif=true;save();render();return}if(!("Notification" in window)){alert("Notifications non prises en charge ici.");return}
   S.notif=(await Notification.requestPermission())==="granted";if(!S.notif)alert("Autorisation refusée dans le navigateur.")}save();render()}
-function notify(t,b){try{new Notification(t,{body:b})}catch(e){}}
-function check(){if(!S.notif||Notification.permission!=="granted")return;const d=now(),t=ymd(d),B=budget(cur()),sp=sum(inM(cur()));
-  if(B&&sp/B>=.8&&S.flags.p!==cur()){S.flags.p=cur();notify("Budget bientôt épuisé",`Vous avez consommé ${Math.round(sp/B*100)} % de votre budget.`)}
+function notify(t,b){try{if(window.Android){Android.show(t,b)}else{new Notification(t,{body:b})}}catch(e){}}
+function check(){if(!S.notif||(!window.Android&&Notification.permission!=="granted"))return;const d=now(),t=ymd(d),B=budget(cur()),sp=sum(inM(cur()));
+  for(const th of [80,15]){if(B&&sp/B*100>=th&&S.flags["p"+th]!==cur()){S.flags.p15=cur();S.flags["p"+th]=cur();notify(th===15?"Alerte précoce":"Budget bientôt épuisé",`Vous avez déjà dépensé ${Math.round(sp/B*100)} % de votre budget du mois.`);break}}
   if(d.getHours()>=20&&S.flags.r!==t&&!S.exp.some(e=>e.t.slice(0,10)===t)){S.flags.r=t;notify("Mon Budget Quotidien","N’oubliez pas d’enregistrer vos dépenses du jour.")}
   S.prov.filter(x=>!x.done&&x.dt===t&&S.flags["v"+x.id]!==t).forEach(x=>{S.flags["v"+x.id]=t;notify("Provision prévue aujourd’hui",x.n+" : "+ar(x.a))});save()}
 render();check();setInterval(check,60000);
