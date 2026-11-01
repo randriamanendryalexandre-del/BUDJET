@@ -9,6 +9,6 @@ jobs:
         with: { distribution: temurin, java-version: 17 }
       - uses: gradle/actions/setup-gradle@v3
         with: { gradle-version: 8.7 }
-      - run: gradle assembleDebug --no-daemon
+      - run: gradle -p .github/workflows assembleDebug --no-daemon
       - uses: actions/upload-artifact@v4
-        with: { name: MonBudgetQuotidien-apk, path: app/build/outputs/apk/debug/app-debug.apk }
+        with: { name: MonBudgetQuotidien-apk, path: .github/workflows/app/build/outputs/apk/debug/app-debug.apk }
