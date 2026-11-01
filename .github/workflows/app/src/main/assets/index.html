@@ -3,19 +3,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mon Budget Quotidien</title>
 <style>
-:root{--bg:#f3f6f2;--card:#fff;--ink:#14261c;--mut:#5d7066;--line:#dbe4dc;--pri:#1f6b45;--onp:#fff;--warn:#b4531a;--bad:#b3261e;--sand:#e9d9a6;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);color-scheme:light}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1a14;--card:#182620;--ink:#e8f0ea;--mut:#9bb0a3;--line:#2a3d33;--pri:#5fc08a;--onp:#08170f;--warn:#e8925a;--bad:#f2867f;--sand:#4a4326;color-scheme:dark}}
+:root{--bg:#f3f6f2;--card:#fff;--ink:#14261c;--mut:#5d7066;--line:#dbe4dc;--pri:#1f6b45;--onp:#fff;--warn:#b4531a;--bad:#b3261e;--sand:#e9d9a6;--pri2:#2f9461;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1a14;--card:#182620;--ink:#e8f0ea;--mut:#9bb0a3;--line:#2a3d33;--pri:#5fc08a;--onp:#08170f;--warn:#e8925a;--bad:#f2867f;--sand:#4a4326;--pri2:#3fa06c;color-scheme:dark}}
 *{box-sizing:border-box}html,body{height:100%;margin:0}
 body{background:var(--bg);color:var(--ink);font:16px/1.45 "Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
 #app{max-width:520px;margin:0 auto;padding:16px 16px calc(84px + env(safe-area-inset-bottom,0px))}
 h1{font-size:1.15rem;margin:0 0 12px}h2{font-size:1rem;margin:20px 0 8px}
-.hero{background:var(--pri);color:var(--onp);border-radius:20px;padding:20px}
+.hero{background:linear-gradient(135deg,var(--pri),var(--pri2));color:var(--onp);border-radius:26px;padding:22px;box-shadow:0 10px 26px rgba(31,107,69,.28)}
 .hero .big{font-size:2.3rem;font-weight:700;letter-spacing:-.02em;line-height:1.1}
 .bar{height:10px;border-radius:5px;background:rgba(127,127,127,.3);overflow:hidden;margin:12px 0 6px}
 .bar i{display:block;height:100%;background:var(--sand);border-radius:5px}
 .hero.over .bar i{background:#ff8d84}
 .row{display:flex;justify-content:space-between;gap:8px}.mut{color:var(--mut);font-size:.9rem}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:8px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px 14px;margin-bottom:8px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
 .item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
 .item:last-child{border:0}.amt{font-weight:600;white-space:nowrap}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.grid .card{margin:0}.grid b{display:block;font-size:1.1rem}
@@ -33,6 +33,10 @@ nav button.on{color:var(--pri);font-weight:700;box-shadow:inset 0 3px 0 var(--pr
 #sheet.on{display:flex}#sheet>div{background:var(--bg);width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));max-height:90%;overflow:auto}
 .ro{background:var(--sand);border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:.9rem}
 .bad{color:var(--bad)}.warn{color:var(--warn)}
+.top{display:flex;align-items:center;gap:12px;margin-bottom:14px}.top .mut{text-transform:capitalize}
+.logo{width:48px;height:48px;border-radius:15px;background:linear-gradient(135deg,var(--pri),var(--pri2));color:var(--onp);display:grid;place-items:center;font-weight:800;font-size:1.15rem;box-shadow:0 4px 12px rgba(31,107,69,.35)}
+.ring{flex:none;width:86px;height:86px;border-radius:50%;background:conic-gradient(var(--sand) calc(var(--p)*1%),rgba(255,255,255,.22) 0);display:grid;place-items:center;position:relative}.ring::before{content:"";position:absolute;inset:9px;border-radius:50%;background:var(--pri)}.ring b{position:relative;font-size:1.05rem}
+h2{font-size:1.02rem;margin:22px 4px 8px}nav button{font-size:.74rem;line-height:1.5}
 </style></head><body>
 <div id="app"></div><div id="sheet"></div>
 <nav id="nav"></nav>
@@ -65,7 +69,8 @@ function plan(){ // calcule budget du jour et prévision des jours suivants
 function sheet(html){const s=$("#sheet");s.innerHTML="<div>"+html+"</div>";s.classList.add("on")}
 function close(){$("#sheet").classList.remove("on")}
 $("#sheet").onclick=e=>{if(e.target.id==="sheet")close()};
-const LAB={home:"Accueil",exp:"Dépenses",prov:"Provisions",hist:"Historique",set:"Réglages"};
+const LAB={home:"🏠<br>Accueil",exp:"💸<br>Dépenses",prov:"🛒<br>Provisions",hist:"📅<br>Historique",set:"⚙️<br>Réglages"};
+const ico=n=>({alimentation:"🍚",transport:"🚌","hygiène":"🧼","santé":"💊",communication:"📱",autres:"🛍️"})[n.toLowerCase()]||"🏷️";
 function render(){
   $("#nav").innerHTML=Object.entries(LAB).map(([k,v])=>`<button class="${tab===k?"on":""}" onclick="go('${k}')">${v}</button>`).join("");
   $("#app").innerHTML=({home,exp:expTab,prov,hist,set})[tab]();
@@ -78,9 +83,9 @@ function home(){
   const m=cur(),B=budget(m),l=inM(m),sp=sum(l),left=B-sp,pc=B?Math.round(sp/B*100):0,p=plan();
   const up=S.prov.filter(x=>!x.done).sort((a,b)=>a.dt.localeCompare(b.dt)).slice(0,4);
   const td=l.filter(e=>e.t.slice(0,10)===p.t);
-  return`<h1>Mon Budget Quotidien</h1>
+  return`<div class="top"><span class="logo">Ar</span><div><h1 style="margin:0">Mon Budget Quotidien</h1><span class="mut">${new Date().toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"})}</span></div></div>
   <div class="hero ${left<0?"over":""}"><div class="mut" style="color:inherit;opacity:.8">Solde restant · ${MOIS[now().getMonth()]}</div>
-  <div class="big">${ar(left)}</div><div class="bar"><i style="width:${Math.min(100,pc)}%"></i></div>
+  <div class="row" style="align-items:center"><div class="big">${ar(left)}</div><div class="ring" style="--p:${Math.min(100,pc)}"><b>${pc}%</b></div></div>
   <div class="row"><span>${pc} % du budget consommé</span><span>${ar(sp)} / ${ar(B)}</span></div></div>
   <h2>Aujourd’hui</h2><div class="grid">
   <div class="card"><span class="mut">Budget du jour</span><b>${ar(p.todayB)}</b></div>
@@ -90,7 +95,7 @@ function home(){
   <h2>Dépenses du jour</h2><div class="card">${td.length?td.map(expRow).join(""):`<span class="mut">Aucune dépense aujourd’hui. Touchez « + Dépense » pour commencer.</span>`}</div>
   <h2>Prochaines provisions</h2><div class="card">${up.length?up.map(x=>`<div class="item"><span>${esc(x.n)}<br><span class="mut">${new Date(x.dt).toLocaleDateString("fr-FR")}</span></span><span class="amt">${ar(x.a)}</span></div>`).join(""):`<span class="mut">Aucune provision prévue.</span>`}</div>
   <button class="fab" onclick="expForm()">+ Dépense</button>`}
-function expRow(e){return`<div class="item"><span><b>${esc(catN(e.c))}</b> ${e.d?"· "+esc(e.d):""}<br><span class="mut">${new Date(e.t).toLocaleString("fr-FR",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"})}</span></span>
+function expRow(e){return`<div class="item"><span><b>${ico(catN(e.c))} ${esc(catN(e.c))}</b> ${e.d?"· "+esc(e.d):""}<br><span class="mut">${new Date(e.t).toLocaleString("fr-FR",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"})}</span></span>
   <span style="text-align:right"><span class="amt">${ar(e.a)}</span>${ro()?"":`<br><button class="sm" onclick="expForm('${e.id}')">Modifier</button>`}</span></div>`}
 function expTab(){const l=inM(vm);
   return`${monthBar()}<div class="card"><div class="row"><span class="mut">Total du mois</span><b>${ar(sum(l))}</b></div></div>
